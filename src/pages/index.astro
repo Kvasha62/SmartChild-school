@@ -1,0 +1,383 @@
+---
+/**
+ * Homepage: hero → tracks → «Почему я» → latest articles → lead magnet.
+ *
+ * NOTE: the «Последние материалы» block uses a local mock array on purpose
+ * (requirement of the task). Once the content collections are filled with real
+ * articles, this array can be replaced by a `getCollection()` call — the cards
+ * already link to the same routes (`/<track>/<slug>`) that the seeded entries use.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TrackCard from '../components/TrackCard.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+
+type TrackId = 'scratch' | 'oge' | 'ege';
+
+interface MockArticle {
+  title: string;
+  excerpt: string;
+  date: string;
+  track: TrackId;
+  slug: string;
+}
+
+const tracks = [
+  {
+    icon: '🎮',
+    title: 'Дошкольники и началка',
+    description: '6-10 лет: Scratch, развитие логики, геймификация обучения',
+    audience: 'Для родителей, которые хотят привить ребёнку интерес к технологиям',
+    link: '/scratch',
+    accentColor: '#22c55e',
+  },
+  {
+    icon: '📘',
+    title: 'Готовимся к ОГЭ',
+    description: '11-14 лет: Python, Roblox Studio, разбор заданий ОГЭ',
+    audience: 'Для подростков, которые хотят сдать ОГЭ на отлично и попробовать геймдев',
+    link: '/oge',
+    accentColor: '#3b82f6',
+  },
+  {
+    icon: '🎓',
+    title: 'Готовимся к ЕГЭ',
+    description: '15-17 лет: продвинутый Python, Unity, разбор заданий ЕГЭ',
+    audience: 'Для старшеклассников, нацеленных на IT-профессию',
+    link: '/ege',
+    accentColor: '#8b5cf6',
+  },
+];
+
+const advantages = [
+  { icon: '🧑‍🏫', text: 'Опыт преподавания: Scratch, Python, Unity, Roblox' },
+  { icon: '📋', text: 'Знаю требования ОГЭ и ЕГЭ изнутри' },
+  { icon: '🎯', text: 'Индивидуальный подход к каждому ученику' },
+  { icon: '🎬', text: 'Видеоразборы и практика на реальных заданиях' },
+];
+
+// Mock articles: two per track, newest first.
+const latestArticles: MockArticle[] = [
+  {
+    title: 'Как готовиться к ЕГЭ по информатике с нуля',
+    excerpt:
+      'План подготовки на 12 месяцев: с чего начать, сколько задач в неделю решать и как не выгореть к весне.',
+    date: '2026-10-11',
+    track: 'ege',
+    slug: 'kak-gotovitsya-k-ege',
+  },
+  {
+    title: 'ОГЭ: разбор задания №6 на циклы',
+    excerpt:
+      'Пошаговый разбор типового задания №6: как читать условие, считать итерации и не терять баллы на арифметике.',
+    date: '2026-10-02',
+    track: 'oge',
+    slug: 'razbor-zadaniya-6-cikly',
+  },
+  {
+    title: 'Roblox Studio для школьников: первый шаг к геймдеву',
+    excerpt:
+      'Как за один урок собрать полосу препятствий в Roblox Studio и прокачать навыки, полезные на ОГЭ.',
+    date: '2026-09-24',
+    track: 'oge',
+    slug: 'roblox-studio-dlya-shkolnikov',
+  },
+  {
+    title: 'Топ-5 игр на Scratch для первого урока',
+    excerpt:
+      'Пять готовых проектов, которые увлекают ребёнка на первом же занятии: от «Кошки-догонялки» до собственного мультика.',
+    date: '2026-09-18',
+    track: 'scratch',
+    slug: 'top-5-igr-na-scratch',
+  },
+  {
+    title: 'Как объяснить ребёнку циклы: 3 аналогии из Scratch',
+    excerpt:
+      'Цикл «повторить N раз» — самая частая тема на старте. Три бытовые аналогии, понятные детям без терминов.',
+    date: '2026-09-05',
+    track: 'scratch',
+    slug: 'kak-obyasnit-cikly-scratch',
+  },
+  {
+    title: 'Динамическое программирование в ЕГЭ: пошаговый алгоритм',
+    excerpt:
+      'Задания на динамику дают больше всего баллов за код. Разбираем универсальный шаблон решения и типичные ловушки.',
+    date: '2026-08-29',
+    track: 'ege',
+    slug: 'dinamicheskoe-programmirovanie',
+  },
+];
+---
+
+<BaseLayout title="SmartChild — учим детей программированию: от Scratch до ЕГЭ">
+  <!-- ------------------------------------------------------------- hero -->
+  <section class="hero">
+    <div class="container hero__inner">
+      <div class="hero__content">
+        <h1 class="hero__title">Учим детей программированию: от Scratch до ЕГЭ</h1>
+        <p class="hero__subtitle">
+          Опытный преподаватель Python, Unity, Roblox. Готовим к ОГЭ и ЕГЭ по информатике
+        </p>
+        <!-- Plain anchor link: scrolling is handled by CSS (scroll-behavior), no JS. -->
+        <a class="btn btn--primary btn--lg hero__cta" href="#tracks">Выбрать направление обучения</a>
+      </div>
+
+      <div
+        class="hero-image-placeholder"
+        role="img"
+        aria-label="Фотография преподавателя и ученика за ноутбуком с кодом"
+      >
+        <span class="hero-image-placeholder__icon" aria-hidden="true">💻</span>
+        <span class="hero-image-placeholder__text" aria-hidden="true">Фото преподавателя</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------- tracks -->
+  <section class="section tracks" id="tracks" aria-labelledby="tracks-title">
+    <div class="container">
+      <h2 class="section__title" id="tracks-title">Направления обучения</h2>
+      <p class="section__lead">
+        Три трека для разного возраста: от первых игр в Scratch до подготовки к ЕГЭ.
+      </p>
+
+      <div class="tracks__grid">
+        {tracks.map((track) => <TrackCard {...track} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------ why me -->
+  <section class="section why-me" id="why-me" aria-labelledby="why-me-title">
+    <div class="container">
+      <h2 class="section__title" id="why-me-title">Почему родители выбирают меня</h2>
+
+      <div class="why-me__grid">
+        {
+          advantages.map((item) => (
+            <div class="why-me__item">
+              <span class="why-me__icon" aria-hidden="true">{item.icon}</span>
+              <p class="why-me__text">{item.text}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- -------------------------------------------------------- articles -->
+  <section class="section articles" id="articles" aria-labelledby="articles-title">
+    <div class="container">
+      <h2 class="section__title" id="articles-title">Последние материалы</h2>
+      <p class="section__lead">Разборы заданий, идеи проектов и заметки о подготовке к экзаменам.</p>
+
+      <div class="articles__grid">
+        {latestArticles.map((article) => <ArticleCard {...article} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------- lead magnet -->
+  <section class="section lead-magnet" id="lead-magnet" aria-labelledby="lead-magnet-title">
+    <div class="container lead-magnet__inner">
+      <div class="lead-magnet__content">
+        <h2 class="section__title" id="lead-magnet-title">
+          Получите бесплатный чек-лист подготовки к экзамену
+        </h2>
+        <p class="lead-magnet__text">
+          План тем по информатике, список типичных ошибок и график подготовки по неделям — в одном
+          PDF-файле. Пришлём на почту, без спама и звонков.
+        </p>
+      </div>
+
+      {/* TODO: подключить обработку формы (сервис рассылок или CRM) и убрать action="". */}
+      <form class="lead-magnet__form" data-form="lead-magnet" action="">
+        <label class="visually-hidden" for="lead-magnet-email">Ваш e-mail</label>
+        <input
+          class="lead-magnet__input"
+          id="lead-magnet-email"
+          type="email"
+          name="email"
+          autocomplete="email"
+          placeholder="name@example.com"
+          required
+        />
+        <button class="btn btn--primary" type="submit">Получить гайд</button>
+      </form>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* --------------------------------------------------------------- hero */
+  .hero {
+    padding-block: var(--space-2xl);
+    background-image: linear-gradient(180deg, var(--color-bg-accent), var(--color-bg));
+  }
+
+  .hero__inner {
+    display: grid;
+    gap: var(--space-xl);
+  }
+
+  .hero__title {
+    font-size: clamp(1.75rem, 6vw, 3rem);
+    letter-spacing: -0.02em;
+  }
+
+  .hero__subtitle {
+    margin-top: var(--space-md);
+    max-width: 46ch;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-lg);
+  }
+
+  .hero__cta {
+    margin-top: var(--space-lg);
+  }
+
+  .hero-image-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    min-height: 14rem;
+    aspect-ratio: 4 / 3;
+    background-color: var(--color-bg-muted);
+    border: 2px dashed var(--color-border-strong);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .hero-image-placeholder__icon {
+    font-size: 2.5rem;
+    line-height: 1;
+  }
+
+  /* ------------------------------------------------------------- tracks */
+  .tracks__grid {
+    display: grid;
+    gap: var(--space-lg);
+    margin-top: var(--space-xl);
+  }
+
+  /* ------------------------------------------------------------- why me */
+  .why-me {
+    background-color: var(--color-bg-subtle);
+  }
+
+  .why-me__grid {
+    display: grid;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+  }
+
+  .why-me__item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .why-me__icon {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+
+  .why-me__text {
+    font-weight: 500;
+  }
+
+  /* ----------------------------------------------------------- articles */
+  .articles__grid {
+    display: grid;
+    gap: var(--space-lg);
+    margin-top: var(--space-xl);
+  }
+
+  /* -------------------------------------------------------- lead magnet */
+  .lead-magnet {
+    background-color: var(--color-bg-accent);
+  }
+
+  .lead-magnet__inner {
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  .lead-magnet__text {
+    margin-top: var(--space-sm);
+    max-width: 52ch;
+    color: var(--color-text-muted);
+  }
+
+  .lead-magnet__form {
+    display: grid;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .lead-magnet__input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-full);
+    font: inherit;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+  }
+
+  .lead-magnet__input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  /* -------------------------------------------------------- breakpoints */
+  @media (min-width: 768px) {
+    .why-me__grid,
+    .articles__grid,
+    .tracks__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .lead-magnet__form {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .hero {
+      padding-block: var(--space-3xl);
+    }
+
+    .hero__inner {
+      grid-template-columns: 1.1fr 1fr;
+      align-items: center;
+      gap: var(--space-2xl);
+    }
+
+    .hero-image-placeholder {
+      aspect-ratio: 3 / 2;
+    }
+
+    .tracks__grid,
+    .articles__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .lead-magnet__inner {
+      grid-template-columns: 1.2fr 1fr;
+      align-items: center;
+      gap: var(--space-2xl);
+    }
+  }
+</style>
