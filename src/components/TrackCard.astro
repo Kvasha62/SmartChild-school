@@ -1,0 +1,106 @@
+---
+/**
+ * Reusable card that presents one learning track.
+ *
+ * The whole card is clickable thanks to the "stretched link" pattern
+ * (`.track-card__link::after` covers the card), so there is still only one
+ * semantic link per card — no extra JS, no nested interactive elements.
+ */
+interface Props {
+  title: string;
+  description: string;
+  /** «Для кого» — a short sentence about the target audience. */
+  audience: string;
+  /** Emoji icon. */
+  icon: string;
+  link: string;
+  /** Any CSS colour: a hex value ("#22c55e") or a custom property ("var(--x)"). */
+  accentColor: string;
+}
+
+const { title, description, audience, icon, link, accentColor } = Astro.props;
+---
+
+<article class="track-card" style={`--track-accent: ${accentColor};`}>
+  <span class="track-card__icon" aria-hidden="true">{icon}</span>
+  <h3 class="track-card__title">
+    <a class="track-card__link" href={link}>{title}</a>
+  </h3>
+  <p class="track-card__description">{description}</p>
+  <p class="track-card__audience">{audience}</p>
+  <span class="track-card__more" aria-hidden="true">Подробнее →</span>
+</article>
+
+<style>
+  .track-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-top: 4px solid var(--track-accent, var(--color-primary));
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition:
+      transform var(--transition-fast),
+      box-shadow var(--transition-fast);
+  }
+
+  .track-card:hover,
+  .track-card:focus-within {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .track-card__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.5rem;
+    line-height: 1;
+    border-radius: var(--radius-md);
+    background-color: color-mix(in srgb, var(--track-accent, var(--color-primary)) 14%, #ffffff);
+  }
+
+  .track-card__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .track-card__link {
+    color: var(--color-text);
+  }
+
+  .track-card__link:hover {
+    color: var(--track-accent, var(--color-primary));
+    text-decoration: none;
+  }
+
+  /* Stretched link: makes the whole card clickable. */
+  .track-card__link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  .track-card__description {
+    color: var(--color-text);
+  }
+
+  .track-card__audience {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .track-card__more {
+    margin-top: auto;
+    padding-top: var(--space-xs);
+    color: var(--track-accent, var(--color-primary));
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+  }
+</style>

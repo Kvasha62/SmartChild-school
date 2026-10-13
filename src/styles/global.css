@@ -1,0 +1,256 @@
+/*
+ * SmartChild — global style primitives.
+ *
+ * Contains only things that are shared by every page: the design tokens
+ * (CSS Custom Properties), a tiny reset and a few layout primitives
+ * (.container, .section, .btn). Everything component-specific lives in
+ * scoped <style> blocks inside the .astro components.
+ */
+
+/* ---------------------------------------------------------------- tokens */
+:root {
+  /* Surfaces */
+  --color-bg: #ffffff;
+  --color-bg-subtle: #f8fafc;
+  --color-bg-muted: #f1f5f9;
+  --color-bg-accent: #eef4ff;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  /* Text */
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+  --color-text-inverse: #ffffff;
+
+  /* Brand + accents */
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-soft: #eef2ff;
+  --color-accent-scratch: #22c55e;
+  --color-accent-oge: #3b82f6;
+  --color-accent-ege: #8b5cf6;
+  --color-focus: #6366f1;
+
+  /* Typography */
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --font-size-xs: 0.8125rem;
+  --font-size-sm: 0.9375rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.375rem;
+  --font-size-2xl: 1.75rem;
+  --font-size-3xl: 2.25rem;
+  --line-height-tight: 1.25;
+  --line-height-base: 1.65;
+
+  /* Spacing */
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  /* Radii */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-full: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 14px 30px rgba(15, 23, 42, 0.16);
+
+  /* Layout */
+  --container-width: 1120px;
+  --header-height: 4rem;
+
+  /* Motion */
+  --transition-fast: 0.2s ease;
+}
+
+/* ----------------------------------------------------------------- reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Sticky header must not cover the anchor targets (#tracks, #why-me, ...). */
+  scroll-padding-top: calc(var(--header-height) + var(--space-md));
+}
+
+/* NOTE: native CSS smooth scrolling keeps the "scroll to #tracks" CTA
+   JS-free. It is disabled for users who ask for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: var(--line-height-tight);
+  font-weight: 700;
+}
+
+p {
+  margin: 0;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+img,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ------------------------------------------------------------ primitives */
+.container {
+  width: 100%;
+  max-width: var(--container-width);
+  margin-inline: auto;
+  padding-inline: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding-inline: var(--space-xl);
+  }
+}
+
+.section {
+  padding-block: var(--space-2xl);
+}
+
+@media (min-width: 1024px) {
+  .section {
+    padding-block: var(--space-3xl);
+  }
+}
+
+.section__title {
+  font-size: var(--font-size-2xl);
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 768px) {
+  .section__title {
+    font-size: var(--font-size-3xl);
+  }
+}
+
+.section__lead {
+  margin-top: var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+  max-width: 60ch;
+}
+
+/* Buttons — shared by Header, Hero and the lead-magnet form. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: 0.75rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.btn:hover {
+  text-decoration: none;
+}
+
+.btn--primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--primary:hover {
+  background-color: var(--color-primary-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.btn--lg {
+  padding: 1rem 1.75rem;
+  font-size: var(--font-size-lg);
+}
+
+/* Visible to screen readers only. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  top: var(--space-xs);
+  left: var(--space-xs);
+  z-index: 200;
+  padding: var(--space-xs) var(--space-md);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}

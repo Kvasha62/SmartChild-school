@@ -1,0 +1,169 @@
+---
+/**
+ * Reusable card for a blog article.
+ *
+ * NOTE: the `track` prop is a union instead of a plain string so a typo is
+ * caught by `astro check` (TypeScript) instead of silently rendering an
+ * unknown badge.
+ */
+import { TRACK_META, type TrackId } from '../lib/tracks';
+
+interface Props {
+  title: string;
+  excerpt: string;
+  /** ISO date, e.g. "2026-03-12". */
+  date: string;
+  track: TrackId;
+  /** Optional cover image path; a styled placeholder is shown without it. */
+  image?: string;
+  slug: string;
+}
+
+const { title, excerpt, date, track, image, slug } = Astro.props;
+
+const { label, icon, accent } = TRACK_META[track];
+const href = `/${track}/${slug}`;
+
+const dateFormatter = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+const parsedDate = new Date(date);
+const formattedDate = Number.isNaN(parsedDate.getTime()) ? date : dateFormatter.format(parsedDate);
+---
+
+<article class="article-card" style={`--track-accent: ${accent};`}>
+  <div class="article-card__media">
+    {
+      image ? (
+        <img
+          class="article-card__image"
+          src={image}
+          alt={`Иллюстрация к статье «${title}»`}
+          width="640"
+          height="360"
+          loading="lazy"
+        />
+      ) : (
+        <span class="article-card__placeholder" role="img" aria-label={`Заглушка обложки статьи «${title}»`}>
+          <span class="article-card__placeholder-icon" aria-hidden="true">{icon}</span>
+        </span>
+      )
+    }
+  </div>
+
+  <div class="article-card__body">
+    <span class="article-card__track">{label}</span>
+    <h3 class="article-card__title">
+      <a class="article-card__link" href={href}>{title}</a>
+    </h3>
+    <p class="article-card__excerpt">{excerpt}</p>
+    <time class="article-card__date" datetime={date}>{formattedDate}</time>
+  </div>
+</article>
+
+<style>
+  .article-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition:
+      transform var(--transition-fast),
+      box-shadow var(--transition-fast);
+  }
+
+  .article-card:hover,
+  .article-card:focus-within {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .article-card__media {
+    aspect-ratio: 16 / 9;
+    background-color: var(--color-bg-muted);
+  }
+
+  .article-card__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .article-card__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--track-accent) 22%, #ffffff),
+      var(--color-bg-muted)
+    );
+  }
+
+  .article-card__placeholder-icon {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  .article-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    flex: 1;
+    padding: var(--space-lg);
+  }
+
+  .article-card__track {
+    align-self: flex-start;
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--radius-full);
+    background-color: color-mix(in srgb, var(--track-accent) 14%, #ffffff);
+    color: color-mix(in srgb, var(--track-accent) 80%, #0f172a);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .article-card__title {
+    font-size: var(--font-size-lg);
+  }
+
+  .article-card__link {
+    color: var(--color-text);
+  }
+
+  .article-card__link:hover {
+    color: var(--track-accent);
+    text-decoration: none;
+  }
+
+  /* Stretched link: the whole card opens the article. */
+  .article-card__link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .article-card__excerpt {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .article-card__date {
+    margin-top: auto;
+    padding-top: var(--space-sm);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+  }
+</style>
