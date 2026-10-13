@@ -1,0 +1,203 @@
+---
+/**
+ * Article page: /scratch/<slug>, /oge/<slug>, /ege/<slug>.
+ *
+ * Also an addition beyond the original scope: the homepage mock articles and
+ * the track pages link to these URLs, and the content collections are already
+ * seeded, so rendering them keeps the whole navigation free of 404s.
+ */
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { TRACK_IDS, TRACK_META } from '../../lib/tracks';
+
+export async function getStaticPaths() {
+  const paths = [];
+
+  for (const track of TRACK_IDS) {
+    const entries = await getCollection(track);
+
+    for (const entry of entries) {
+      if (entry.data.draft) continue;
+      paths.push({
+        params: { track, slug: entry.id },
+        props: { entry, meta: TRACK_META[track] },
+      });
+    }
+  }
+
+  return paths;
+}
+
+const { entry, meta } = Astro.props;
+const { Content } = await render(entry);
+
+const dateFormatter = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+---
+
+<BaseLayout title={`${entry.data.title} — SmartChild`} description={entry.data.excerpt}>
+  <article class="post" style={`--track-accent: ${meta.accent};`}>
+    <div class="container post__inner">
+      <nav class="post__breadcrumbs" aria-label="Хлебные крошки">
+        <a href="/">Главная</a>
+        <span aria-hidden="true">/</span>
+        <a href={`/${entry.collection}`}>Трек «{meta.label}»</a>
+      </nav>
+
+      <span class="post__track">{meta.icon} {meta.label}</span>
+      <h1 class="post__title">{entry.data.title}</h1>
+      <p class="post__excerpt">{entry.data.excerpt}</p>
+      <time class="post__date" datetime={entry.data.date.toISOString().slice(0, 10)}>
+        {dateFormatter.format(entry.data.date)}
+      </time>
+
+      {
+        entry.data.cover && (
+          <img
+            class="post__cover"
+            src={entry.data.cover}
+            alt={`Иллюстрация к статье «${entry.data.title}»`}
+            width="1200"
+            height="675"
+          />
+        )
+      }
+
+      <div class="post__body">
+        <Content />
+      </div>
+
+      <aside class="post__cta">
+        <p class="post__cta-text">Хотите разобрать эту тему на занятии?</p>
+        <a class="btn btn--primary" href="/#lead-magnet">Записаться на пробное занятие</a>
+      </aside>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .post {
+    padding-block: var(--space-2xl);
+  }
+
+  .post__inner {
+    max-width: 46rem;
+  }
+
+  .post__breadcrumbs {
+    display: flex;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-lg);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .post__breadcrumbs a {
+    color: inherit;
+  }
+
+  .post__track {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--radius-full);
+    background-color: color-mix(in srgb, var(--track-accent) 14%, #ffffff);
+    color: color-mix(in srgb, var(--track-accent) 80%, #0f172a);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+  }
+
+  .post__title {
+    margin-top: var(--space-sm);
+    font-size: clamp(1.5rem, 5vw, 2.25rem);
+    letter-spacing: -0.02em;
+  }
+
+  .post__excerpt {
+    margin-top: var(--space-sm);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-lg);
+  }
+
+  .post__date {
+    display: block;
+    margin-top: var(--space-xs);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .post__cover {
+    display: block;
+    width: 100%;
+    margin-top: var(--space-lg);
+    border-radius: var(--radius-lg);
+  }
+
+  /* NOTE: markdown output is slotted content, so the typography rules below
+     have to be global to reach the elements rendered by <Content />. */
+  .post__body {
+    margin-top: var(--space-xl);
+  }
+
+  .post__body :global(h2) {
+    margin-top: var(--space-xl);
+    font-size: var(--font-size-xl);
+  }
+
+  .post__body :global(h3) {
+    margin-top: var(--space-lg);
+    font-size: var(--font-size-lg);
+  }
+
+  .post__body :global(p),
+  .post__body :global(ul),
+  .post__body :global(ol) {
+    margin-top: var(--space-sm);
+  }
+
+  .post__body :global(ul),
+  .post__body :global(ol) {
+    padding-left: var(--space-lg);
+    list-style: revert;
+  }
+
+  .post__body :global(li) {
+    margin-top: var(--space-2xs);
+  }
+
+  .post__body :global(code) {
+    padding: 0.1rem 0.35rem;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-bg-muted);
+    font-size: 0.9em;
+  }
+
+  .post__body :global(strong) {
+    color: var(--color-text);
+  }
+
+  .post__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-top: var(--space-2xl);
+    padding: var(--space-lg);
+    background-color: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .post__cta-text {
+    font-weight: 600;
+  }
+
+  @media (min-width: 1024px) {
+    .post {
+      padding-block: var(--space-3xl);
+    }
+  }
+</style>
