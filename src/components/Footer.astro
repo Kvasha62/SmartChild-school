@@ -1,0 +1,150 @@
+---
+/**
+ * Site footer: three columns (tracks / contacts / copyright) plus the logo.
+ *
+ * NOTE: contacts are obvious placeholders — replace them with the real
+ * e-mail, phone and messengers before the production launch.
+ */
+const year = new Date().getFullYear();
+
+const trackLinks = [
+  { label: 'Scratch для 6–10 лет', href: '/scratch' },
+  { label: 'Подготовка к ОГЭ', href: '/oge' },
+  { label: 'Подготовка к ЕГЭ', href: '/ege' },
+];
+---
+
+<footer class="site-footer" id="contacts">
+  <div class="container footer__inner">
+    <div class="footer__brand">
+      <a class="footer__logo" href="/">
+        <span class="footer__mark" aria-hidden="true"></span>
+        SmartChild
+      </a>
+      <p class="footer__tagline">
+        Учим детей программировать: от Scratch до ЕГЭ по информатике.
+      </p>
+    </div>
+
+    <nav class="footer__col" aria-label="Направления обучения">
+      <h2 class="footer__title">Направления</h2>
+      <ul class="footer__list">
+        {
+          trackLinks.map((link) => (
+            <li>
+              <a class="footer__link" href={link.href}>
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="footer__col">
+      <h2 class="footer__title">Контакты</h2>
+      <ul class="footer__list">
+        <li><a class="footer__link" href="mailto:hello@smartchild.example">hello@smartchild.example</a></li>
+        <li><a class="footer__link" href="tel:+70000000000">+7 (000) 000-00-00</a></li>
+        <li><span class="footer__text">Telegram: @smartchild</span></li>
+      </ul>
+    </div>
+
+    <div class="footer__col">
+      <h2 class="footer__title">Документы</h2>
+      <p class="footer__text">© {year} SmartChild. Все права защищены.</p>
+      <p class="footer__text footer__text--muted">ИП Иванов И. И. · ИНН 000000000000</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    padding-block: var(--space-2xl);
+    background-color: var(--color-bg-subtle);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .footer__inner {
+    display: grid;
+    gap: var(--space-xl);
+  }
+
+  .footer__brand {
+    display: grid;
+    gap: var(--space-xs);
+  }
+
+  .footer__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--color-text);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+  }
+
+  .footer__logo:hover {
+    text-decoration: none;
+  }
+
+  .footer__mark {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: var(--radius-full);
+    background-image: linear-gradient(
+      135deg,
+      var(--color-accent-scratch),
+      var(--color-accent-oge) 50%,
+      var(--color-accent-ege)
+    );
+  }
+
+  .footer__tagline {
+    max-width: 32ch;
+  }
+
+  .footer__col {
+    display: grid;
+    gap: var(--space-sm);
+    align-content: start;
+  }
+
+  .footer__title {
+    color: var(--color-text);
+    font-size: var(--font-size-base);
+  }
+
+  .footer__list {
+    display: grid;
+    gap: var(--space-xs);
+  }
+
+  .footer__link {
+    color: var(--color-text-muted);
+  }
+
+  .footer__link:hover {
+    color: var(--color-primary);
+  }
+
+  .footer__text--muted {
+    color: var(--color-text-muted);
+    opacity: 0.8;
+  }
+
+  @media (min-width: 768px) {
+    .footer__inner {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .footer__inner {
+      grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr));
+      gap: var(--space-2xl);
+    }
+  }
+</style>
