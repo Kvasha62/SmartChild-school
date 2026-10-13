@@ -6,7 +6,7 @@
  * caught by `astro check` (TypeScript) instead of silently rendering an
  * unknown badge.
  */
-type TrackId = 'scratch' | 'oge' | 'ege';
+import { TRACK_META, type TrackId } from '../lib/tracks';
 
 interface Props {
   title: string;
@@ -21,20 +21,7 @@ interface Props {
 
 const { title, excerpt, date, track, image, slug } = Astro.props;
 
-const TRACK_LABELS: Record<TrackId, string> = {
-  scratch: 'Scratch',
-  oge: 'ОГЭ',
-  ege: 'ЕГЭ',
-};
-
-const TRACK_ICONS: Record<TrackId, string> = {
-  scratch: '🎮',
-  oge: '📘',
-  ege: '🎓',
-};
-
-const label = TRACK_LABELS[track];
-const icon = TRACK_ICONS[track];
+const { label, icon, accent } = TRACK_META[track];
 const href = `/${track}/${slug}`;
 
 const dateFormatter = new Intl.DateTimeFormat('ru-RU', {
@@ -46,7 +33,7 @@ const parsedDate = new Date(date);
 const formattedDate = Number.isNaN(parsedDate.getTime()) ? date : dateFormatter.format(parsedDate);
 ---
 
-<article class="article-card" style={`--track-accent: var(--color-accent-${track});`}>
+<article class="article-card" style={`--track-accent: ${accent};`}>
   <div class="article-card__media">
     {
       image ? (
