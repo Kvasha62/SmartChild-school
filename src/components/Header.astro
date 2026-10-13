@@ -1,0 +1,251 @@
+---
+/**
+ * Site header: logo, primary navigation and the "trial lesson" CTA.
+ *
+ * NOTE: the mobile menu is implemented with the "checkbox hack" instead of a
+ * JS handler, because the project requirement is to ship without client-side
+ * JavaScript. The checkbox stays focusable so the menu can be toggled with a
+ * keyboard (Space) as well as a tap on the burger label.
+ */
+const pathname = Astro.url.pathname;
+const isCurrent = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+const navItems = [
+  { label: 'Scratch', href: '/scratch' },
+  { label: 'ОГЭ', href: '/oge' },
+  { label: 'ЕГЭ', href: '/ege' },
+  { label: 'О преподавателе', href: '/#why-me' },
+  { label: 'Контакты', href: '/#contacts' },
+];
+---
+
+<header class="site-header">
+  <div class="container header__inner">
+    <a class="logo" href="/">
+      <span class="logo__mark" aria-hidden="true"></span>
+      SmartChild
+    </a>
+
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Открыть меню навигации" />
+    <label class="nav-burger" for="nav-toggle" aria-hidden="true">
+      <span class="nav-burger__line"></span>
+    </label>
+
+    <nav class="site-nav" aria-label="Основная навигация">
+      <ul class="nav-list">
+        {
+          navItems.map((item) => (
+            <li>
+              <a
+                class="nav-link"
+                href={item.href}
+                aria-current={isCurrent(item.href) ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <!-- TODO: заменить на страницу записи, когда появится (сейчас ведёт к форме на главной). -->
+      <a class="btn btn--primary nav-cta" href="/#lead-magnet">Записаться на пробное занятие</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    min-height: var(--header-height);
+  }
+
+  /* ----------------------------------------------------------------- logo */
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--color-text);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .logo:hover {
+    text-decoration: none;
+  }
+
+  .logo__mark {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: var(--radius-full);
+    background-image: linear-gradient(
+      135deg,
+      var(--color-accent-scratch),
+      var(--color-accent-oge) 50%,
+      var(--color-accent-ege)
+    );
+  }
+
+  /* -------------------------------------------------- burger (mobile only) */
+  .nav-toggle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    clip-path: inset(50%);
+  }
+
+  .nav-burger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .nav-burger__line,
+  .nav-burger__line::before,
+  .nav-burger__line::after {
+    display: block;
+    width: 1.25rem;
+    height: 2px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-text);
+    transition: transform var(--transition-fast), opacity var(--transition-fast);
+  }
+
+  .nav-burger__line::before,
+  .nav-burger__line::after {
+    content: '';
+  }
+
+  .nav-burger__line::before {
+    transform: translateY(-6px);
+  }
+
+  .nav-burger__line::after {
+    transform: translateY(4px);
+  }
+
+  .nav-toggle:focus-visible ~ .nav-burger {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  .nav-toggle:checked ~ .nav-burger .nav-burger__line {
+    background-color: transparent;
+  }
+
+  .nav-toggle:checked ~ .nav-burger .nav-burger__line::before {
+    transform: translateY(0) rotate(45deg);
+  }
+
+  .nav-toggle:checked ~ .nav-burger .nav-burger__line::after {
+    transform: translateY(-2px) rotate(-45deg);
+  }
+
+  /* ------------------------------------------------- navigation (mobile) */
+  .site-nav {
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    display: none;
+    flex-direction: column;
+    gap: var(--space-sm);
+    max-height: calc(100vh - var(--header-height));
+    overflow-y: auto;
+    padding: var(--space-md);
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+  }
+
+  .nav-toggle:checked ~ .site-nav {
+    display: flex;
+  }
+
+  .nav-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .nav-link {
+    display: block;
+    padding: var(--space-sm) 0;
+    color: var(--color-text);
+    font-weight: 500;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .nav-link:hover {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .nav-link[aria-current='page'] {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .nav-cta {
+    width: 100%;
+  }
+
+  /* ------------------------------------------------- navigation (desktop) */
+  @media (min-width: 768px) {
+    .site-nav {
+      padding-inline: var(--space-xl);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .nav-toggle,
+    .nav-burger {
+      display: none;
+    }
+
+    .site-nav {
+      position: static;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: var(--space-lg);
+      max-height: none;
+      overflow: visible;
+      padding: 0;
+      border: 0;
+      box-shadow: none;
+    }
+
+    .nav-list {
+      flex-direction: row;
+      align-items: center;
+      gap: var(--space-lg);
+    }
+
+    .nav-link {
+      padding: 0;
+      border-bottom: 0;
+    }
+
+    .nav-cta {
+      width: auto;
+    }
+  }
+</style>
