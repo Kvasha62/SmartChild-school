@@ -1,0 +1,137 @@
+---
+/**
+ * Track landing pages: /scratch, /oge, /ege.
+ *
+ * They are not part of the original scope (the task asked for the homepage),
+ * but the header, footer and TrackCard components already link to them and the
+ * content collections exist — so the pages are generated from one dynamic
+ * route to keep every link on the site clickable.
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import { TRACK_IDS, TRACK_META } from '../lib/tracks';
+
+export async function getStaticPaths() {
+  const entriesByTrack = await Promise.all(
+    TRACK_IDS.map(async (track) => {
+      const entries = await getCollection(track);
+      return [track, entries.filter((entry) => !entry.data.draft)] as const;
+    }),
+  );
+
+  return TRACK_IDS.map((track) => ({
+    params: { track },
+    props: {
+      track,
+      meta: TRACK_META[track],
+      articles: entriesByTrack.find(([id]) => id === track)?.[1] ?? [],
+    },
+  }));
+}
+
+const { track, meta, articles } = Astro.props;
+const sortedArticles = [...articles].sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+---
+
+<BaseLayout title={meta.metaTitle} description={meta.lead}>
+  <section class="track-hero" style={`--track-accent: ${meta.accent};`}>
+    <div class="container track-hero__inner">
+      <span class="track-hero__icon" aria-hidden="true">{meta.icon}</span>
+      <div>
+        <p class="track-hero__eyebrow">{meta.audience}</p>
+        <h1 class="track-hero__title">{meta.h1}</h1>
+        <p class="track-hero__lead">{meta.lead}</p>
+      </div>
+      <a class="btn btn--primary btn--lg track-hero__cta" href="/#lead-magnet">
+        Записаться на пробное занятие
+      </a>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="track-articles-title">
+    <div class="container">
+      <h2 class="section__title" id="track-articles-title">Материалы трека «{meta.label}»</h2>
+
+      {
+        sortedArticles.length > 0 ? (
+          <div class="track-grid">
+            {sortedArticles.map((entry) => (
+              <ArticleCard
+                title={entry.data.title}
+                excerpt={entry.data.excerpt}
+                date={entry.data.date.toISOString().slice(0, 10)}
+                track={track}
+                slug={entry.id}
+                image={entry.data.cover}
+              />
+            ))}
+          </div>
+        ) : (
+          <p class="section__lead">Первые материалы уже готовятся — загляните чуть позже.</p>
+        )
+      }
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .track-hero {
+    padding-block: var(--space-2xl);
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--track-accent, var(--color-primary)) 12%, #ffffff),
+      var(--color-bg)
+    );
+  }
+
+  .track-hero__inner {
+    display: grid;
+    gap: var(--space-md);
+    justify-items: start;
+  }
+
+  .track-hero__icon {
+    font-size: 2.5rem;
+    line-height: 1;
+  }
+
+  .track-hero__eyebrow {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .track-hero__title {
+    margin-top: var(--space-2xs);
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+    letter-spacing: -0.02em;
+  }
+
+  .track-hero__lead {
+    margin-top: var(--space-sm);
+    max-width: 60ch;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-lg);
+  }
+
+  .track-grid {
+    display: grid;
+    gap: var(--space-lg);
+    margin-top: var(--space-xl);
+  }
+
+  @media (min-width: 768px) {
+    .track-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .track-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>
