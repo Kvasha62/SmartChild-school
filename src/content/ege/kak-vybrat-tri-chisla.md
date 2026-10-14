@@ -25,7 +25,7 @@ draft: false
 
 `2 * K = 4`.
 
-Нужно выбрать три элемента с разными индексами так, чтобы хотя бы две выбранные позиции отличались минимум на четыре.
+Нужно выбрать три элемента с разными индексами так, чтобы максимальное расстояние между выбранными позициями было не меньше четырёх. Важно: не требуется, чтобы каждая пара позиций находилась на расстоянии не меньше `K`; ограничение относится именно к максимальному расстоянию между тремя выбранными элементами.
 
 ## 2. Разбираем пример вручную
 
@@ -108,44 +108,62 @@ numbers = [6, 7, 8, 2, 3, 5]
 ## 4. Полный код на Python
 
 ```python
-k, n, *a = map(int, open("27-A.txt"))
+filename = "27-A.txt"
 
-# Сохраняем три наибольших элемента
-# вместе с их индексами.
+# Первый проход: сохраняем только три наибольших
+# элемента вместе с их индексами.
 top3 = []
 
-for index, value in enumerate(a):
-    top3.append((value, index))
-    top3.sort(reverse=True)
+with open(filename) as file:
+    k = int(next(file))
+    n = int(next(file))
 
-    if len(top3) > 3:
-        top3.pop()
+    for index, line in enumerate(file):
+        value = int(line)
+        top3.append((value, index))
+        top3.sort(reverse=True)
+
+        if len(top3) > 3:
+            top3.pop()
 
 answer = float("-inf")
 best_old = None
 best_old_index = -1
 
-# Перебираем правый элемент тройки.
-for right in range(2 * k, n):
+# Второй проход: читаем файл двумя итераторами.
+# Первый показывает элемент с индексом right - 2*K,
+# второй — текущий элемент с индексом right.
+with open(filename) as old_file, open(filename) as right_file:
+    # Пропускаем K и N в обоих файлах.
+    next(old_file)
+    next(old_file)
+    next(right_file)
+    next(right_file)
 
-    # Добавляем новую позицию, которая уже
-    # достаточно далеко от right.
-    old_index = right - 2 * k
-    old_value = a[old_index]
+    # Сдвигаем правую итерацию на 2*K элементов.
+    for _ in range(2 * k):
+        next(right_file)
 
-    if best_old is None or old_value > best_old:
-        best_old = old_value
-        best_old_index = old_index
+    for right, (old_line, right_line) in enumerate(
+        zip(old_file, right_file), start=2 * k
+    ):
+        old_index = right - 2 * k
+        old_value = int(old_line)
+        right_value = int(right_line)
 
-    # Находим лучшее третье число.
-    # Оно не должно совпадать по индексу
-    # с двумя уже выбранными элементами.
-    for third_value, third_index in top3:
-        if (third_index != best_old_index
-                and third_index != right):
-            candidate = best_old + third_value + a[right]
-            answer = max(answer, candidate)
-            break
+        if best_old is None or old_value > best_old:
+            best_old = old_value
+            best_old_index = old_index
+
+        # Третий элемент — лучший из трёх глобальных
+        # максимумов, индекс которого отличается
+        # от индексов best_old и right.
+        for third_value, third_index in top3:
+            if (third_index != best_old_index
+                    and third_index != right):
+                candidate = best_old + third_value + right_value
+                answer = max(answer, candidate)
+                break
 
 print(answer)
 ```
@@ -177,8 +195,8 @@ N = 6
 
 ## 6. Оценка сложности
 
-- Время: `O(N)`. Список `top3` содержит максимум три элемента, поэтому его сортировка занимает постоянное время на каждой итерации.
-- Дополнительная память: `O(1)`, не считая хранения входной последовательности.
+- Время: `O(N)`. Каждый проход читает не более `N` чисел, а список `top3` содержит максимум три элемента.
+- Дополнительная память: `O(1)`. Вся последовательность не хранится: используются только три максимальных элемента, два текущих значения и несколько переменных.
 
 Это значительно эффективнее полного перебора троек за `O(N³)`.
 
