@@ -25,3 +25,9 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Local secrets for the separate lead API
+api/.env
+api/.env.*
+!api/.env.example
+.env.local.backup-*

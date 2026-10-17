@@ -185,12 +185,21 @@ const latestArticles: MockArticle[] = [
         </h2>
         <p class="lead-magnet__text">
           План тем по информатике, список типичных ошибок и график подготовки по неделям — в одном
-          PDF-файле. Пришлём на почту, без спама и звонков.
+          PDF-файле.
+        </p>
+        <p class="lead-magnet__text" data-lead-download hidden>
+          <a href="/smartchild-checklist-oge-ege-informatics.pdf" download>
+            Скачать бесплатный чек-лист в PDF
+          </a>
         </p>
       </div>
 
-      {/* TODO: подключить обработку формы (сервис рассылок или CRM) и убрать action="". */}
-      <form class="lead-magnet__form" data-form="lead-magnet" action="">
+      <form
+        class="lead-magnet__form"
+        data-form="lead-magnet"
+        data-api-url={import.meta.env.PUBLIC_LEAD_API_URL || '/api/lead'}
+        novalidate
+      >
         <label class="visually-hidden" for="lead-magnet-email">Ваш e-mail</label>
         <input
           class="lead-magnet__input"
@@ -198,14 +207,70 @@ const latestArticles: MockArticle[] = [
           type="email"
           name="email"
           autocomplete="email"
+          inputmode="email"
+          maxlength="254"
           placeholder="name@example.com"
+          aria-describedby="lead-magnet-status"
           required
         />
         <button class="btn btn--primary" type="submit">Получить гайд</button>
+        <p class="lead-magnet__status" id="lead-magnet-status" role="status" aria-live="polite" data-state="idle"></p>
       </form>
     </div>
   </section>
 </BaseLayout>
+
+
+<script>
+  import { readLeadApiResponse } from '../lib/lead-api-response.mjs';
+
+  const form = document.querySelector<HTMLFormElement>('[data-form="lead-magnet"]');
+  const status = document.querySelector<HTMLElement>('#lead-magnet-status');
+  const emailInput = document.querySelector<HTMLInputElement>('#lead-magnet-email');
+  const downloadLink = document.querySelector<HTMLElement>('[data-lead-download]');
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!form || !status || !emailInput) return;
+
+    const email = emailInput.value.trim();
+    const apiUrl = form.dataset.apiUrl?.trim();
+    if (!emailInput.checkValidity() || !email) {
+      status.dataset.state = 'error';
+      status.textContent = 'Проверьте адрес электронной почты.';
+      emailInput.focus();
+      return;
+    }
+    if (!apiUrl) {
+      status.dataset.state = 'error';
+      status.textContent = 'Форма ещё настраивается. Попробуйте позже.';
+      return;
+    }
+
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (button) button.disabled = true;
+    if (downloadLink) downloadLink.hidden = true;
+    status.dataset.state = 'pending';
+    status.textContent = 'Отправляем запрос…';
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const payload = await readLeadApiResponse(response);
+      status.dataset.state = 'success';
+      status.textContent = payload.message || 'Проверьте почту.';
+      if (downloadLink) downloadLink.hidden = false;
+      form.reset();
+    } catch (error) {
+      status.dataset.state = 'error';
+      status.textContent = error instanceof Error ? error.message : 'Ошибка отправки. Попробуйте позже.';
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+</script>
 
 <style>
   /* --------------------------------------------------------------- hero */
