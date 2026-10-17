@@ -269,3 +269,72 @@ test('does not notify the owner when visitor delivery fails', async () => {
   assert.equal(response.status, 502);
   assert.equal(resendCalls, 1);
 });
+
+
+test('rate-limits repeated requests from the same client and returns Retry-After', async () => {
+  const { fetchImpl } = fakeFetch();
+  const handler = createLeadHandler({ env, fetchImpl, logger: { error() {} } });
+  const headers = {
+    origin: 'https://school.example.test',
+    'content-type': 'application/json',
+    'x-nf-client-connection-ip': '203.0.113.10',
+  };
+
+  for (let i = 0; i < 5; i += 1) {
+    const response = await handler(makeRequest({
+      headers,
+      body: JSON.stringify({ email: 'not-an-email' }),
+    }));
+    assert.equal(response.status, 400, `request ${i + 1} should reach validation`);
+  }
+
+  const limited = await handler(makeRequest({ headers }));
+  assert.equal(limited.status, 429);
+  assert.equal(limited.headers.get('retry-after'), '900');
+  assert.equal((await limited.json()).ok, false);
+});
+
+test('applies a timeout signal to the PDF fetch and handles a timeout safely', async () => {
+  const handler = createLeadHandler({
+    env,
+    fetchImpl: async (input, init = {}) => {
+      assert.equal(String(input), 'https://school.example.test/smartchild-checklist-oge-ege-informatics.pdf');
+      assert.ok(init.signal instanceof AbortSignal);
+      assert.equal(init.signal.aborted, false);
+      const error = new Error('simulated PDF timeout');
+      error.name = 'AbortError';
+      throw error;
+    },
+    logger: { error() {} },
+  });
+
+  const response = await handler(makeRequest());
+  assert.equal(response.status, 503);
+  assert.equal((await response.json()).ok, false);
+});
+
+test('applies a timeout signal to Resend and handles a timeout safely', async () => {
+  let resendCalls = 0;
+  const handler = createLeadHandler({
+    env,
+    fetchImpl: async (input, init = {}) => {
+      const url = String(input);
+      assert.ok(init.signal instanceof AbortSignal);
+      if (url === 'https://school.example.test/smartchild-checklist-oge-ege-informatics.pdf') {
+        return new Response(pdf, { status: 200 });
+      }
+      assert.equal(url, 'https://api.resend.com/emails');
+      resendCalls += 1;
+      assert.equal(init.signal.aborted, false);
+      const error = new Error('simulated Resend timeout');
+      error.name = 'AbortError';
+      throw error;
+    },
+    logger: { error() {} },
+  });
+
+  const response = await handler(makeRequest());
+  assert.equal(response.status, 502);
+  assert.equal((await response.json()).ok, false);
+  assert.equal(resendCalls, 1);
+});

@@ -15,3 +15,13 @@ It is not production-ready until a real PDF exists, SMTP is configured privately
 For Gmail, use an App Password generated in the Google account after enabling 2-Step Verification. Do not use your normal Gmail password. Never share the App Password in chat, screenshots, or Git.
 
 The in-memory rate limiter is best-effort and resets on restart; before public deployment, put a platform/WAF limit in front of the API. The API ignores `X-Forwarded-For` unless `TRUST_PROXY=true`; enable that flag only when the API cannot be reached directly and the immediate reverse proxy is trusted to set the header. Use HTTPS in production, keep the API host and site origin aligned, and test both email deliveries. A successful API response cannot guarantee inbox placement.
+
+## Netlify Function rate limiting and timeouts
+
+The Netlify handler applies a best-effort limit of 5 requests per 15 minutes per
+client-IP bucket and uses 8-second abort timeouts for the PDF fetch and Resend
+requests. This in-memory limiter is scoped to one warm function instance: it
+does **not** provide a globally shared limit across concurrent/cold instances.
+Before enabling public production delivery, configure a shared edge/WAF limit
+(or an external shared rate-limit store) for `/api/lead`. The in-function
+limiter is a secondary safeguard, not a substitute for that deployment control.

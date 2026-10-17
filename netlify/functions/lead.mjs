@@ -1,6 +1,30 @@
 const MAX_BODY_BYTES = 4096;
 const PDF_PATH = '/smartchild-checklist-oge-ege-informatics.pdf';
 const PDF_FILENAME = 'smartchild-checklist-oge-ege-informatics.pdf';
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const MAX_REQUESTS_PER_WINDOW = 5;
+const MAX_RATE_LIMIT_BUCKETS = 1000;
+const EXTERNAL_REQUEST_TIMEOUT_MS = 8000;
+
+// Best-effort per-function-instance protection only. Netlify may run several
+// instances, so a shared WAF/edge rate limit is still required for production.
+function isRateLimited(buckets, clientIp, now = Date.now()) {
+  const previous = buckets.get(clientIp);
+  if (previous && now - previous.start < RATE_LIMIT_WINDOW_MS) {
+    previous.count += 1;
+    return previous.count > MAX_REQUESTS_PER_WINDOW;
+  }
+
+  for (const [key, value] of buckets) {
+    if (now - value.start >= RATE_LIMIT_WINDOW_MS) buckets.delete(key);
+  }
+  if (buckets.size >= MAX_RATE_LIMIT_BUCKETS) {
+    const oldestKey = buckets.keys().next().value;
+    if (oldestKey !== undefined) buckets.delete(oldestKey);
+  }
+  buckets.set(clientIp, { start: now, count: 1 });
+  return false;
+}
 
 function json(status, body) {
   return new Response(JSON.stringify(body), {
@@ -18,7 +42,7 @@ function validEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-async function sendResend({ fetchImpl, apiKey, message }) {
+async function sendResend({ fetchImpl, apiKey, message, signal }) {
   const response = await fetchImpl('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -26,6 +50,7 @@ async function sendResend({ fetchImpl, apiKey, message }) {
       'content-type': 'application/json',
     },
     body: JSON.stringify(message),
+    signal,
   });
 
   if (!response.ok) {
@@ -41,6 +66,8 @@ export function createLeadHandler({
   fetchImpl = fetch,
   logger = console,
 } = {}) {
+  const rateLimitBuckets = new Map();
+
   return async function handleLead(request) {
     if (request.method !== 'POST') {
       return json(405, { ok: false, error: 'Метод не поддерживается.' });
@@ -55,6 +82,23 @@ export function createLeadHandler({
     const contentType = (request.headers.get('content-type') || '').toLowerCase();
     if (!/^application\/json(?:\s*;|\s*$)/.test(contentType)) {
       return json(415, { ok: false, error: 'Ожидается JSON-запрос.' });
+    }
+
+    // Netlify supplies this value from the client connection.
+    const clientIp = request.headers.get('x-nf-client-connection-ip') || 'unknown';
+    if (isRateLimited(rateLimitBuckets, clientIp)) {
+      return new Response(JSON.stringify({
+        ok: false,
+        error: 'Слишком много попыток. Попробуйте через 15 минут.',
+      }), {
+        status: 429,
+        headers: {
+          'content-type': 'application/json; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-content-type-options': 'nosniff',
+          'retry-after': String(RATE_LIMIT_WINDOW_MS / 1000),
+        },
+      });
     }
 
     const declaredLength = Number(request.headers.get('content-length') || 0);
@@ -117,7 +161,9 @@ export function createLeadHandler({
     let pdfBytes;
     try {
       const pdfUrl = new URL(PDF_PATH, siteUrl);
-      const pdfResponse = await fetchImpl(pdfUrl);
+      const pdfResponse = await fetchImpl(pdfUrl, {
+        signal: AbortSignal.timeout(EXTERNAL_REQUEST_TIMEOUT_MS),
+      });
       if (!pdfResponse.ok) throw new Error('PDF fetch failed');
 
       pdfBytes = Buffer.from(await pdfResponse.arrayBuffer());
@@ -145,6 +191,7 @@ export function createLeadHandler({
       await sendResend({
         fetchImpl,
         apiKey,
+        signal: AbortSignal.timeout(EXTERNAL_REQUEST_TIMEOUT_MS),
         message: {
           from: env.FROM_EMAIL,
           to: [recipient],
@@ -168,6 +215,7 @@ export function createLeadHandler({
       await sendResend({
         fetchImpl,
         apiKey,
+        signal: AbortSignal.timeout(EXTERNAL_REQUEST_TIMEOUT_MS),
         message: {
           from: env.FROM_EMAIL,
           to: [env.NOTIFY_EMAIL],
